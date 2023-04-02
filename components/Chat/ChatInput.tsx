@@ -212,11 +212,7 @@ export const ChatInput: FC<Props> = ({
 
 
   useEffect(() => {
-    if (!content) {
-      return;
-    }
-
-    const hasArabicWords = /[\u0600-\u06FF]/.test(content);
+    const hasArabicWords = /[\u0600-\u06FF]/.test(content || '');
     const direction = hasArabicWords ? 'rtl' : 'ltr';
 
     if (textareaRef && textareaRef.current) {

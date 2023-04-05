@@ -1,17 +1,21 @@
+import { FC, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { Folder } from '@/types/folder';
 import { Prompt } from '@/types/prompt';
+import { pocketBaseInstance } from '@/utils/app/prompts';
 import {
   IconArrowBarRight,
   IconFolderPlus,
   IconMistOff,
   IconPlus,
 } from '@tabler/icons-react';
-import { FC, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+
 import { PromptFolders } from '../Folders/Prompt/PromptFolders';
 import { Search } from '../Sidebar/Search';
 import { PromptbarSettings } from './PromptbarSettings';
 import { Prompts } from './Prompts';
+import { OpenAIModels } from '@/types/openai';
 
 interface Props {
   prompts: Prompt[];
@@ -38,7 +42,17 @@ export const Promptbar: FC<Props> = ({
 }) => {
   const { t } = useTranslation('promptbar');
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [filteredPrompts, setFilteredPrompts] = useState<Prompt[]>(prompts);
+  const [promptsInBulk, setPromptsInBulk] = useState<Prompt[]>([]);
+  const promptsToRender = useMemo(() => {
+    const dedupePrompts = [...promptsInBulk, ...prompts].filter(
+      (prompt) => !prompts.find((p) => p.content === prompt.content),
+    );
+
+    return dedupePrompts;
+  }, [promptsInBulk, prompts]);
+
+  const [filteredPrompts, setFilteredPrompts] =
+    useState<Prompt[]>(promptsToRender);
 
   const handleUpdatePrompt = (prompt: Prompt) => {
     onUpdatePrompt(prompt);
@@ -80,7 +94,7 @@ export const Promptbar: FC<Props> = ({
   useEffect(() => {
     if (searchTerm) {
       setFilteredPrompts(
-        prompts.filter((prompt) => {
+        promptsToRender.filter((prompt) => {
           const searchable =
             prompt.name.toLowerCase() +
             ' ' +
@@ -91,9 +105,32 @@ export const Promptbar: FC<Props> = ({
         }),
       );
     } else {
-      setFilteredPrompts(prompts);
+      setFilteredPrompts(promptsToRender);
     }
-  }, [searchTerm, prompts]);
+  }, [searchTerm, promptsToRender]);
+
+  useEffect(() => {
+    pocketBaseInstance
+      .collection('prompts')
+      .getFullList(200 /* batch size */, {
+        sort: '-created',
+        $autoCancel: false,
+      })
+      .then((result) => {
+        const serverSidePrompts: Prompt[] = result.map((record) => {
+          return {
+            id: record.id,
+            name: record.name,
+            description: record.description,
+            content: record.content,
+            model: OpenAIModels['gpt-3.5-turbo'],
+            folderId: null,
+          };
+        });
+
+        setPromptsInBulk(serverSidePrompts);
+      });
+  }, []);
 
   return (
     <div
@@ -112,20 +149,20 @@ export const Promptbar: FC<Props> = ({
         </button>
 
         <button
-          className="flex items-center flex-shrink-0 gap-3 p-3 ml-2 text-sm text-white transition-colors duration-200 border rounded-md cursor-pointer border-white/20 hover:bg-gray-500/10"
+          className="ml-2 flex flex-shrink-0 cursor-pointer items-center gap-3 rounded-md border border-white/20 p-3 text-sm text-white transition-colors duration-200 hover:bg-gray-500/10"
           onClick={() => onCreateFolder(t('New folder'))}
         >
           <IconFolderPlus size={16} />
         </button>
 
         <IconArrowBarRight
-          className="hidden p-1 ml-1 cursor-pointer text-neutral-300 hover:text-neutral-400 sm:flex"
+          className="ml-1 hidden cursor-pointer p-1 text-neutral-300 hover:text-neutral-400 sm:flex"
           size={32}
           onClick={onToggleSidebar}
         />
       </div>
 
-      {prompts.length > 1 && (
+      {promptsToRender.length > 1 && (
         <Search
           placeholder={t('Search prompts...') || ''}
           searchTerm={searchTerm}
@@ -135,7 +172,7 @@ export const Promptbar: FC<Props> = ({
 
       <div className="flex-grow overflow-auto">
         {folders.length > 0 && (
-          <div className="flex pb-2 border-b border-white/20">
+          <div className="flex border-b border-white/20 pb-2">
             <PromptFolders
               searchTerm={searchTerm}
               prompts={filteredPrompts}
@@ -149,7 +186,7 @@ export const Promptbar: FC<Props> = ({
           </div>
         )}
 
-        {prompts.length > 0 ? (
+        {promptsToRender.length > 0 ? (
           <div
             className="h-full pt-2"
             onDrop={(e) => handleDrop(e)}
@@ -164,7 +201,7 @@ export const Promptbar: FC<Props> = ({
             />
           </div>
         ) : (
-          <div className="mt-8 text-center text-white opacity-50 select-none">
+          <div className="mt-8 select-none text-center text-white opacity-50">
             <IconMistOff className="mx-auto mb-3" />
             <span className="text-[14px] leading-normal">
               {t('No prompts.')}

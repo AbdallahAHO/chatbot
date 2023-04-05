@@ -44,12 +44,10 @@ export const Promptbar: FC<Props> = ({
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [promptsInBulk, setPromptsInBulk] = useState<Prompt[]>([]);
   const promptsToRender = useMemo(() => {
-    const dedupePrompts = [...promptsInBulk, ...prompts].filter(
-      (prompt) => !prompts.find((p) => p.name === prompt.name),
-    );
+    const mergedPrompts = [...promptsInBulk, ...prompts];
 
-    return dedupePrompts;
-  }, [promptsInBulk, prompts]);
+    return mergedPrompts.reverse();
+  }, [prompts, promptsInBulk]);
 
   const [filteredPrompts, setFilteredPrompts] =
     useState<Prompt[]>(promptsToRender);

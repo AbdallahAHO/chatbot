@@ -26,7 +26,7 @@ import {
 } from '@/utils/app/conversation';
 import { saveFolders } from '@/utils/app/folders';
 import { exportData, importData } from '@/utils/app/importExport';
-import { savePrompts } from '@/utils/app/prompts';
+import { savePrompts, pocketBaseInstance } from '@/utils/app/prompts';
 import { IconArrowBarLeft, IconArrowBarRight } from '@tabler/icons-react';
 import { GetServerSideProps } from 'next';
 import { useTranslation } from 'next-i18next';
@@ -585,11 +585,16 @@ const Home: React.FC<HomeProps> = ({
       setFolders(JSON.parse(folders));
     }
 
-    const prompts = localStorage.getItem('prompts');
-
-    if (prompts) {
-      setPrompts(JSON.parse(prompts));
-    }
+    pocketBaseInstance
+      .collection('promptsInBulk')
+      .getOne('rwc9dksdjxzjcp3', {
+        $autoCancel: false,
+      })
+      .then((e) => {
+        if (prompts) {
+          setPrompts(JSON.parse(e.promptsStringify));
+        }
+      });
 
     const conversationHistory = localStorage.getItem('conversationHistory');
     if (conversationHistory) {

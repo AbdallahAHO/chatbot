@@ -1,11 +1,3 @@
-import { GetServerSideProps } from 'next';
-import { useTranslation } from 'next-i18next';
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
-import Head from 'next/head';
-import { useEffect, useRef, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import Script from 'next/script';
-
 import { Chat } from '@/components/Chat/Chat';
 import { Chatbar } from '@/components/Chatbar/Chatbar';
 import { Navbar } from '@/components/Mobile/Navbar';
@@ -16,10 +8,10 @@ import { ErrorMessage } from '@/types/error';
 import { LatestExportFormat, SupportedExportFormats } from '@/types/export';
 import { Folder, FolderType } from '@/types/folder';
 import {
+  fallbackModelID,
   OpenAIModel,
   OpenAIModelID,
   OpenAIModels,
-  fallbackModelID,
 } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
 import {
@@ -36,6 +28,12 @@ import { saveFolders } from '@/utils/app/folders';
 import { exportData, importData } from '@/utils/app/importExport';
 import { savePrompts } from '@/utils/app/prompts';
 import { IconArrowBarLeft, IconArrowBarRight } from '@tabler/icons-react';
+import { GetServerSideProps } from 'next';
+import { useTranslation } from 'next-i18next';
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import Head from 'next/head';
+import { useEffect, useRef, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 interface HomeProps {
   serverSideApiKeyIsSet: boolean;
@@ -633,12 +631,12 @@ const Home: React.FC<HomeProps> = ({
           content="height=device-height ,width=device-width, initial-scale=1, user-scalable=no"
         />
         <link rel="icon" href="/favicon.ico" />
-        <Script
+        <script
           async
           defer
           data-website-id="284cd553-9939-4cdc-82ff-234b54db6e38"
           src="https://analytics.abdallah.work/bosbosbos.js"
-        ></Script>
+        ></script>
       </Head>
       {selectedConversation && (
         <main

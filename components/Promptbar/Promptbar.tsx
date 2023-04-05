@@ -43,14 +43,8 @@ export const Promptbar: FC<Props> = ({
   const { t } = useTranslation('promptbar');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [promptsInBulk, setPromptsInBulk] = useState<Prompt[]>([]);
-  const promptsToRender = useMemo(() => {
-    const mergedPrompts = [...promptsInBulk, ...prompts];
 
-    return mergedPrompts.reverse();
-  }, [prompts, promptsInBulk]);
-
-  const [filteredPrompts, setFilteredPrompts] =
-    useState<Prompt[]>(promptsToRender);
+  const [filteredPrompts, setFilteredPrompts] = useState<Prompt[]>(prompts);
 
   const handleUpdatePrompt = (prompt: Prompt) => {
     onUpdatePrompt(prompt);
@@ -92,7 +86,7 @@ export const Promptbar: FC<Props> = ({
   useEffect(() => {
     if (searchTerm) {
       setFilteredPrompts(
-        promptsToRender.filter((prompt) => {
+        prompts.filter((prompt) => {
           const searchable =
             prompt.name.toLowerCase() +
             ' ' +
@@ -103,32 +97,9 @@ export const Promptbar: FC<Props> = ({
         }),
       );
     } else {
-      setFilteredPrompts(promptsToRender);
+      setFilteredPrompts(prompts);
     }
-  }, [searchTerm, promptsToRender]);
-
-  useEffect(() => {
-    pocketBaseInstance
-      .collection('prompts')
-      .getFullList(200 /* batch size */, {
-        sort: '-created',
-        $autoCancel: false,
-      })
-      .then((result) => {
-        const serverSidePrompts: Prompt[] = result.map((record) => {
-          return {
-            id: record.id,
-            name: record.name,
-            description: record.description,
-            content: record.content,
-            model: OpenAIModels['gpt-3.5-turbo'],
-            folderId: null,
-          };
-        });
-
-        setPromptsInBulk(serverSidePrompts);
-      });
-  }, []);
+  }, [searchTerm, prompts]);
 
   return (
     <div
@@ -160,7 +131,7 @@ export const Promptbar: FC<Props> = ({
         />
       </div>
 
-      {promptsToRender.length > 1 && (
+      {prompts.length > 1 && (
         <Search
           placeholder={t('Search prompts...') || ''}
           searchTerm={searchTerm}
@@ -184,7 +155,7 @@ export const Promptbar: FC<Props> = ({
           </div>
         )}
 
-        {promptsToRender.length > 0 ? (
+        {prompts.length > 0 ? (
           <div
             className="h-full pt-2"
             onDrop={(e) => handleDrop(e)}

@@ -341,16 +341,23 @@ const Home: React.FC<HomeProps> = ({
     setConversations(updatedConversations);
     saveConversations(updatedConversations);
 
-    const updatedPrompts: Prompt[] = prompts.map((p) => {
-      if (p.folderId === folderId) {
-        return {
-          ...p,
-          folderId: null,
-        };
-      }
+    const updatedPrompts: Prompt[] = prompts
+      .map((p) => {
+        if (p.folderId === folderId) {
+          return {
+            ...p,
+            folderId: null,
+          };
+        }
 
-      return p;
-    });
+        return p;
+      })
+      .filter(
+        (prompt, index, self) =>
+          index ===
+          self.findIndex((t) => t.id === prompt.id || t.name === prompt.name),
+      );
+
     setPrompts(updatedPrompts);
     savePrompts(updatedPrompts);
   };
@@ -511,13 +518,19 @@ const Home: React.FC<HomeProps> = ({
   };
 
   const handleUpdatePrompt = (prompt: Prompt) => {
-    const updatedPrompts = prompts.map((p) => {
-      if (p.id === prompt.id) {
-        return prompt;
-      }
+    const updatedPrompts = prompts
+      .map((p) => {
+        if (p.id === prompt.id) {
+          return prompt;
+        }
 
-      return p;
-    });
+        return p;
+      })
+      .filter(
+        (prompt, index, self) =>
+          index ===
+          self.findIndex((t) => t.id === prompt.id || t.name === prompt.name),
+      );
 
     setPrompts(updatedPrompts);
     savePrompts(updatedPrompts);
@@ -591,9 +604,36 @@ const Home: React.FC<HomeProps> = ({
         $autoCancel: false,
       })
       .then((e) => {
-        if (prompts) {
-          setPrompts(JSON.parse(e.promptsStringify));
-        }
+        const bulkPrompts = JSON.parse(e.promptsStringify);
+
+        pocketBaseInstance
+          .collection('prompts')
+          .getFullList(200 /* batch size */, {
+            sort: '-created',
+            $autoCancel: false,
+          })
+          .then((result) => {
+            const serverSidePrompts: Prompt[] = result.map((record) => {
+              return {
+                id: record.id,
+                name: record.name,
+                description: record.description,
+                content: record.content,
+                model: OpenAIModels['gpt-3.5-turbo'],
+                folderId: null,
+              };
+            });
+
+            setPrompts(
+              [...serverSidePrompts, ...bulkPrompts].filter(
+                (prompt, index, self) =>
+                  index ===
+                  self.findIndex(
+                    (t) => t.id === prompt.id || t.name === prompt.name,
+                  ),
+              ),
+            );
+          });
       });
 
     const conversationHistory = localStorage.getItem('conversationHistory');

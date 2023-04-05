@@ -22,18 +22,17 @@ export const updatePrompt = (updatedPrompt: Prompt, allPrompts: Prompt[]) => {
 };
 
 export const savePrompts = async (prompts: Prompt[]) => {
-  const dedupePrompts = prompts.filter(
-    (prompt) => !prompts.find((p) => p.name === prompt.name),
+  // filter out duplicated prompts that have the same name
+  const filteredPrompts = prompts.filter(
+    (prompt, index, self) =>
+      index ===
+      self.findIndex((t) => t.id === prompt.id || t.name === prompt.name),
   );
-
-  const stringifiedPrompts = JSON.stringify(dedupePrompts);
 
   // example update data
   await pocketBaseInstance
     .collection('promptsInBulk')
     .update('rwc9dksdjxzjcp3', {
-      promptsStringify: stringifiedPrompts,
+      promptsStringify: JSON.stringify(filteredPrompts),
     });
-
-  localStorage.setItem('prompts', stringifiedPrompts);
 };

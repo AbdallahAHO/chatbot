@@ -45,7 +45,7 @@ export const Promptbar: FC<Props> = ({
   const [promptsInBulk, setPromptsInBulk] = useState<Prompt[]>([]);
   const promptsToRender = useMemo(() => {
     const dedupePrompts = [...promptsInBulk, ...prompts].filter(
-      (prompt) => !prompts.find((p) => p.content === prompt.content),
+      (prompt) => !prompts.find((p) => p.name === prompt.name),
     );
 
     return dedupePrompts;

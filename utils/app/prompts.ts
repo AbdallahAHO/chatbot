@@ -23,7 +23,7 @@ export const updatePrompt = (updatedPrompt: Prompt, allPrompts: Prompt[]) => {
 
 export const savePrompts = async (prompts: Prompt[]) => {
   const dedupePrompts = prompts.filter(
-    (prompt) => !prompts.find((p) => p.content === prompt.content),
+    (prompt) => !prompts.find((p) => p.name === prompt.name),
   );
 
   const stringifiedPrompts = JSON.stringify(dedupePrompts);
